@@ -7,23 +7,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         000039c4  080001d0  080001d0  000011d0  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       00000060  08003b94  08003b94  00004b94  2**2
+  2 .rodata       00000054  08003b94  08003b94  00004b94  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08003bf4  08003bf4  00005064  2**0
+  3 .ARM.extab    00000000  08003be8  08003be8  00005064  2**0
                   CONTENTS, READONLY
-  4 .ARM          00000008  08003bf4  08003bf4  00004bf4  2**2
+  4 .ARM          00000008  08003be8  08003be8  00004be8  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  08003bfc  08003bfc  00005064  2**0
+  5 .preinit_array 00000000  08003bf0  08003bf0  00005064  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08003bfc  08003bfc  00004bfc  2**2
+  6 .init_array   00000004  08003bf0  08003bf0  00004bf0  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  7 .fini_array   00000004  08003c00  08003c00  00004c00  2**2
+  7 .fini_array   00000004  08003bf4  08003bf4  00004bf4  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  8 .data         00000064  20000000  08003c04  00005000  2**2
+  8 .data         00000064  20000000  08003bf8  00005000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          00000210  20000064  08003c68  00005064  2**2
+  9 .bss          00000210  20000064  08003c5c  00005064  2**2
                   ALLOC
- 10 ._user_heap_stack 00000604  20000274  08003c68  00005274  2**0
+ 10 ._user_heap_stack 00000604  20000274  08003c5c  00005274  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  00005064  2**0
                   CONTENTS, READONLY
@@ -489,11 +489,11 @@ int main(void)
  8000610:	2101      	movs	r1, #1
  8000612:	2000      	movs	r0, #0
  8000614:	f000 fb6e 	bl	8000cf4 <BSP_PB_Init>
-  /* USER CODE BEGIN WHILE */
   char adcString[32];
 
   while (1 == 1)
   {
+	  // Next goal: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuous =oply sampling and conserve CPU resources
 	  uint32_t dacValue = 2048;
  8000618:	f44f 6300 	mov.w	r3, #2048	@ 0x800
  800061c:	627b      	str	r3, [r7, #36]	@ 0x24
@@ -510,7 +510,6 @@ int main(void)
  800062e:	f001 f9b3 	bl	8001998 <HAL_DAC_SetValue>
 
 
-
 	  HAL_ADC_Start(&hadc1);
  8000632:	4812      	ldr	r0, [pc, #72]	@ (800067c <main+0x90>)
  8000634:	f000 fc8e 	bl	8000f54 <HAL_ADC_Start>
@@ -523,7 +522,7 @@ int main(void)
  8000644:	f000 fde3 	bl	800120e <HAL_ADC_GetValue>
  8000648:	6238      	str	r0, [r7, #32]
 
-	  sprintf(adcString, "ADC Value: %lu\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>)
+	  sprintf(adcString, "%lu\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>)
  800064a:	463b      	mov	r3, r7
  800064c:	6a3a      	ldr	r2, [r7, #32]
  800064e:	490c      	ldr	r1, [pc, #48]	@ (8000680 <main+0x94>)
@@ -1772,7 +1771,7 @@ LoopFillZerobss:
   ldr r1, =_edata
  8000c74:	20000064 	.word	0x20000064
   ldr r2, =_sidata
- 8000c78:	08003c04 	.word	0x08003c04
+ 8000c78:	08003bf8 	.word	0x08003bf8
   ldr r2, =_sbss
  8000c7c:	20000064 	.word	0x20000064
   ldr r4, =_ebss
@@ -5277,7 +5276,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(const RCC_ClkInitTypeDef  *RCC_ClkInitStru
  8001ffa:	bf00      	nop
  8001ffc:	40023c00 	.word	0x40023c00
  8002000:	40023800 	.word	0x40023800
- 8002004:	08003ba8 	.word	0x08003ba8
+ 8002004:	08003b9c 	.word	0x08003b9c
  8002008:	20000000 	.word	0x20000000
  800200c:	2000000c 	.word	0x2000000c
 
@@ -5325,7 +5324,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  8002044:	4618      	mov	r0, r3
  8002046:	bd80      	pop	{r7, pc}
  8002048:	40023800 	.word	0x40023800
- 800204c:	08003bb8 	.word	0x08003bb8
+ 800204c:	08003bac 	.word	0x08003bac
 
 08002050 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -5351,7 +5350,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  800206c:	4618      	mov	r0, r3
  800206e:	bd80      	pop	{r7, pc}
  8002070:	40023800 	.word	0x40023800
- 8002074:	08003bb8 	.word	0x08003bb8
+ 8002074:	08003bac 	.word	0x08003bac
 
 08002078 <HAL_RCC_GetSysClockFreq>:
   *
@@ -7936,10 +7935,10 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  80032be:	4798      	blx	r3
  80032c0:	3601      	adds	r6, #1
  80032c2:	e7f2      	b.n	80032aa <__libc_init_array+0x1e>
- 80032c4:	08003bfc 	.word	0x08003bfc
- 80032c8:	08003bfc 	.word	0x08003bfc
- 80032cc:	08003bfc 	.word	0x08003bfc
- 80032d0:	08003c00 	.word	0x08003c00
+ 80032c4:	08003bf0 	.word	0x08003bf0
+ 80032c8:	08003bf0 	.word	0x08003bf0
+ 80032cc:	08003bf0 	.word	0x08003bf0
+ 80032d0:	08003bf4 	.word	0x08003bf4
 
 080032d4 <__retarget_lock_acquire_recursive>:
  80032d4:	4770      	bx	lr
@@ -8448,11 +8447,11 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  800375c:	f000 f87a 	bl	8003854 <_printf_i>
  8003760:	e7ee      	b.n	8003740 <_svfiprintf_r+0x1b8>
  8003762:	bf00      	nop
- 8003764:	08003bc0 	.word	0x08003bc0
- 8003768:	08003bca 	.word	0x08003bca
+ 8003764:	08003bb4 	.word	0x08003bb4
+ 8003768:	08003bbe 	.word	0x08003bbe
  800376c:	00000000 	.word	0x00000000
  8003770:	080034c9 	.word	0x080034c9
- 8003774:	08003bc6 	.word	0x08003bc6
+ 8003774:	08003bba 	.word	0x08003bba
 
 08003778 <_printf_common>:
  8003778:	e92d 47f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, sl, lr}
@@ -8786,8 +8785,8 @@ static void UART_SetConfig(UART_HandleTypeDef *huart)
  8003a90:	f104 0619 	add.w	r6, r4, #25
  8003a94:	e7f5      	b.n	8003a82 <_printf_i+0x22e>
  8003a96:	bf00      	nop
- 8003a98:	08003bd1 	.word	0x08003bd1
- 8003a9c:	08003be2 	.word	0x08003be2
+ 8003a98:	08003bc5 	.word	0x08003bc5
+ 8003a9c:	08003bd6 	.word	0x08003bd6
 
 08003aa0 <memmove>:
  8003aa0:	4288      	cmp	r0, r1

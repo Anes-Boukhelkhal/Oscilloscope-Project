@@ -116,18 +116,18 @@ int main(void)
 
   while (1 == 1)
   {
+	  // Next goal: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuous =oply sampling and conserve CPU resources
 	  uint32_t dacValue = 2048;
 
 	  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 	  HAL_DAC_SetValue (&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dacValue);
 
 
-
 	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
 	  uint32_t adcValue = HAL_ADC_GetValue(&hadc1);
 
-	  sprintf(adcString, "ADC Value: %lu\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>)
+	  sprintf(adcString, "%lu\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>)
 	  HAL_UART_Transmit(&huart2, (uint8_t*) adcString, strlen(adcString), HAL_MAX_DELAY);
 
 	  HAL_Delay(100);
