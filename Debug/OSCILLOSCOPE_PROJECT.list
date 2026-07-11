@@ -493,7 +493,7 @@ int main(void)
 
   while (1 == 1)
   {
-	  // Next goal: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuous =oply sampling and conserve CPU resources
+	  // TODO: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuously sampling, do this to conserve CPU resources
 	  uint32_t dacValue = 2048;
  8000618:	f44f 6300 	mov.w	r3, #2048	@ 0x800
  800061c:	627b      	str	r3, [r7, #36]	@ 0x24
@@ -522,7 +522,7 @@ int main(void)
  8000644:	f000 fde3 	bl	800120e <HAL_ADC_GetValue>
  8000648:	6238      	str	r0, [r7, #32]
 
-	  sprintf(adcString, "%lu\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>)
+	  sprintf(adcString, "%lu\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>), need only the numbers or else there are parsing errors in Python code when casting to int
  800064a:	463b      	mov	r3, r7
  800064c:	6a3a      	ldr	r2, [r7, #32]
  800064e:	490c      	ldr	r1, [pc, #48]	@ (8000680 <main+0x94>)
