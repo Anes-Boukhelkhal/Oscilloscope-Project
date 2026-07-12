@@ -19,8 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include <stdio.h>
-#include <string.h>
-#include <math.h>
+#include <string.h> // to print ADC values via UART to COM5
+#include <math.h> // for trig functions
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -113,24 +113,54 @@ int main(void)
 
   /* USER CODE BEGIN WHILE */
   char adcString[32];
+  // char angleString[32]; // for debugging
+
+  // sine wave table values  generated from web site below:
+  // https://deepbluembedded.com/sine-lookup-table-generator-calculator/
+
+  const uint16_t sineWaveLookupTable[] = {
+		  2048, 2176, 2304, 2431, 2557, 2680, 2801, 2919,
+		  3034, 3145, 3251, 3353, 3449, 3540, 3625, 3704,
+		  3776, 3842, 3900, 3951, 3995, 4031, 4059, 4079,
+		  4091, 4095, 4091, 4079, 4059, 4031, 3995, 3951,
+		  3900, 3842, 3776, 3704, 3625, 3540, 3449, 3353,
+		  3251, 3145, 3034, 2919, 2801, 2680, 2557, 2431,
+		  2304, 2176, 2048, 1919, 1791, 1664, 1538, 1415,
+		  1294, 1176, 1061, 950, 844, 742, 646, 555,
+		  470, 391, 319, 253, 195, 144, 100, 64,
+		  36, 16, 4, 0, 4, 16, 36, 64,
+		  100, 144, 195, 253, 319, 391, 470, 555,
+		  646, 742, 844, 950, 1061, 1176, 1294, 1415,
+		  1538, 1664, 1791, 1919
+ };
+
+  uint8_t index = 0; // make sure to initialize outside loop or else it keeps getting redefined to 0
 
   while (1 == 1)
   {
 	  // TODO: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuously sampling, do this to conserve CPU resources
+	  // TODO: Use a timer peripheral interrupt rather than a software delay
 
-	  uint32_t dacValue = 2048;
+	  uint16_t dacValue = sineWaveLookupTable[index];
+
+	  ++index;
+
+	  if (index == 99) { // make sure to update this ending index or else the sine wave may end up looking like a sawtooth wave or something completely unintended!! (also remember zero-based indexing)
+		  index = 0;
+	  }
 
 	  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 	  HAL_DAC_SetValue (&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dacValue);
 
-
 	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-	  uint32_t adcValue = HAL_ADC_GetValue(&hadc1);
+	  uint16_t adcValue = HAL_ADC_GetValue(&hadc1);
 
-	  sprintf(adcString, "%lu\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>), need only the numbers or else there are parsing errors in Python code when casting to int
+	  sprintf(adcString, "%u\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>), need only the numbers or else there are parsing errors in Python code when casting to int
+	 //  sprintf(angleString, "%d\r\n", angle); // for debugging
+
 	  HAL_UART_Transmit(&huart2, (uint8_t*) adcString, strlen(adcString), HAL_MAX_DELAY);
-
+	  // HAL_UART_Transmit(&huart2, (uint8_t*) angleString, strlen(angleString), HAL_MAX_DELAY); // for debugging
 	  HAL_Delay(50);
     /* USER CODE END WHILE */
 
