@@ -117,6 +117,7 @@ int main(void)
   while (1 == 1)
   {
 	  // TODO: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuously sampling, do this to conserve CPU resources
+
 	  uint32_t dacValue = 2048;
 
 	  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
@@ -130,7 +131,7 @@ int main(void)
 	  sprintf(adcString, "%lu\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>), need only the numbers or else there are parsing errors in Python code when casting to int
 	  HAL_UART_Transmit(&huart2, (uint8_t*) adcString, strlen(adcString), HAL_MAX_DELAY);
 
-	  HAL_Delay(100);
+	  HAL_Delay(50);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

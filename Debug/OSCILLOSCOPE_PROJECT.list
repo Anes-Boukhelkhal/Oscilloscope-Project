@@ -37,11 +37,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  00022eec  00000000  00000000  00012d36  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000bfec  00000000  00000000  00035c22  2**0
+ 17 .debug_line   0000bfee  00000000  00000000  00035c22  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000d78e9  00000000  00000000  00041c0e  2**0
+ 18 .debug_str    000d78e9  00000000  00000000  00041c10  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  001194f7  2**0
+ 19 .comment      00000043  00000000  00000000  001194f9  2**0
                   CONTENTS, READONLY
  20 .debug_frame  00002880  00000000  00000000  0011953c  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -489,11 +489,11 @@ int main(void)
  8000610:	2101      	movs	r1, #1
  8000612:	2000      	movs	r0, #0
  8000614:	f000 fb6e 	bl	8000cf4 <BSP_PB_Init>
-  char adcString[32];
 
   while (1 == 1)
   {
 	  // TODO: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuously sampling, do this to conserve CPU resources
+
 	  uint32_t dacValue = 2048;
  8000618:	f44f 6300 	mov.w	r3, #2048	@ 0x800
  800061c:	627b      	str	r3, [r7, #36]	@ 0x24
@@ -539,8 +539,8 @@ int main(void)
  8000668:	4806      	ldr	r0, [pc, #24]	@ (8000684 <main+0x98>)
  800066a:	f002 fa23 	bl	8002ab4 <HAL_UART_Transmit>
 
-	  HAL_Delay(100);
- 800066e:	2064      	movs	r0, #100	@ 0x64
+	  HAL_Delay(50);
+ 800066e:	2032      	movs	r0, #50	@ 0x32
  8000670:	f000 fc08 	bl	8000e84 <HAL_Delay>
   {
  8000674:	bf00      	nop
