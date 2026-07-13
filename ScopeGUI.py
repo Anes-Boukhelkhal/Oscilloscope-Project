@@ -15,7 +15,7 @@ plt.ion() # Enabling interactive mode (not using plt.show(), not even inside the
 
 voltageReference = 3.3 # Voltage the MCU is powered by
 voltSamples = [] # volt samples an empty list
-voltSampleSize = 500 # increased sample size so entire waveform is graphed at higher time/div rather than stopping in between, although FIXME: lower time/div waveform appears frozen
+voltSampleSize = 500 # increased sample size so entire waveform is graphed at higher time/div rather than stopping in between, although 
 sampleRate = 20 # (rate = 10 times per second, based on HAL_DELAY in STM32 loop, which is set to 10 ms (1000 ms / 50 ms = 20)) # TODO: add variable to pull HAL_DELAY value and thus sample rate from stm32 firmware instead of manually changing it every time
 totalTime = voltSampleSize / sampleRate * 1000 # initial total time (time) in ms for x-axis is equal to the range of the voltSamples / ADC sampling rate
 timePerDiv = 500 # oscilloscopes usually have 10 horizontal divs
@@ -25,8 +25,10 @@ figure.subplots_adjust(bottom = 0.25) # adds a 0.25 (25 % of figure) margin belo
 
 axes.set_title("STM32 Oscilloscope GUI", fontdict = dict (fontsize = 20, fontweight = "bold")) 
 
-timePerDivSlider = Slider(ax = plt.axes([0.35, 0.10, 0.4, 0.05]), label = "Time/div slider (ms)", valmin = 1, valmax = 3000, valinit = timePerDiv) # FIXME: GUI crashes when clicking at a point in the slider rather than scrolling to it # interactive time/div Slider object, plt.axes() is a function from the plt (pyplot) module that returns an axes object
 # FIXME: if time/div left at initial timePerDiv ms, waveform stops updating when it reaches the end unless you scroll through the slider (problem fixed when you go back to initial timePerDiv setting after that)
+timePerDivSlider = Slider(ax = plt.axes([0.35, 0.10,  0.4, 0.05]), label = "Time/div slider (ms)", valmin = 1, valmax = 3000, valinit = timePerDiv, orientation = "horizontal") # plt.axes() is a function that returns an axes object FIXME: GUI crashes when clicking at a point in the slider rather than scrolling to it # interactive time/div Slider object, plt.axes() is a function from the plt (pyplot) module that returns an axes object
+
+voltsPerDivSlider = Slider(ax = plt.axes([0.05, 0.3, 0.03, 0.5]), label = "Volts/div slider (V)", valmin = 0.125, valmax = 1.1, valinit = 0.25, orientation = "vertical")
 
 def adjustTimePerDiv (val): # need to pass an argument for voltSampleSize to actually be changed by .on_changed method in next line
    totalTime = timePerDivSlider.val * 10 # oscilloscopes usually have 10 horizontal divs
@@ -69,6 +71,8 @@ while 1 == 1:
    axes.set_xlim(0, timePerDivSlider.val * 10)
    axes.xaxis.set_major_locator(MultipleLocator(timePerDivSlider.val)) # major tick mark every timePerDiv ms, MultipleLocator(timePerDivSlider.val) defines an object using a constructor, and that object is passed to this axes method
    axes.tick_params('x', labelbottom = False) # hide numbers from x-axis tick marks (many options for second argument of this method)
+   
    axes.set_ylabel("Voltage (V)")
+   axes.yaxis.set_major_locator(MultipleLocator(voltsPerDivSlider.val))
    
    plt.pause(0.0001) # entire window pauses for a short interval before redrawing, not just the graph 
