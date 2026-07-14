@@ -21,7 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <math.h> // may be used for waveform generation
+#include <stdio.h> // be used for sprintf() function to store string in a butter
+#include <string.h> // used for strlen() function in UART transmission
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -113,7 +115,7 @@ int main(void)
   /* Initialize USER push-button, will be used to trigger an interrupt each time it's pressed.*/
   BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
 
-  /* Infinite loop */
+
   /* USER CODE BEGIN WHILE */
   char adcString[32];
   // char angleString[32]; // for debugging
