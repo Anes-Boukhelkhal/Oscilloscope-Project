@@ -4,10 +4,16 @@ from matplotlib.ticker import MultipleLocator # to adjust x-axis tick marks (tim
 from matplotlib.widgets import Slider # adjustable X (time/div) and Y axis (volts/div) (Slider class imported from widgets module of Matplotlib package/library)
 import numpy as np # for calculations like ranges with steps
 
-# TODO: Add volts/div slider
+
+
+
+# TODO: add variable to pull HAL_DELAY value and thus sample rate from stm32 firmware instead of manually changing it every time
 # TODO: Add option to select between sine, square, triangle, sawtooth waves (need to interface with STM32)
 # TODO: Add option to pause 
 # TODO (Advanced): Add trigger functionality
+
+
+
 
 mySerial = serial.Serial("COM5", 115200) # mySerial is an object which is connected to the STM32 Virtual ST-Link Port which is COM5 running at 115200 baud
 
@@ -16,7 +22,7 @@ plt.ion() # Enabling interactive mode (not using plt.show(), not even inside the
 voltageReference = 3.3 # Voltage the MCU is powered by
 voltSamples = [] # volt samples an empty list
 voltSampleSize = 500 # increased sample size so entire waveform is graphed at higher time/div rather than stopping in between, although 
-sampleRate = 20 # (rate = 10 times per second, based on HAL_DELAY in STM32 loop, which is set to 10 ms (1000 ms / 50 ms = 20)) # TODO: add variable to pull HAL_DELAY value and thus sample rate from stm32 firmware instead of manually changing it every time
+sampleRate = 20 # (rate = 10 times per second, based on HAL_DELAY in STM32 loop, which is set to 10 ms (1000 ms / 50 ms = 20)) 
 totalTime = voltSampleSize / sampleRate * 1000 # initial total time (time) in ms for x-axis is equal to the range of the voltSamples / ADC sampling rate
 timePerDiv = 500 # oscilloscopes usually have 10 horizontal divs
 figure, axes = plt.subplots() # plt.subplots returns a tuple containing the figure and axes, assigned to figure and axes variables using commas
@@ -52,7 +58,7 @@ while 1 == 1:
    
    #################
 
-   adcSample = int(mySerial.readline()) # cast to int from readLine() which returns bytes # FIXME: occasionally get error: ValueError: invalid literal for int() with base 10: b'\n' and have to re-run the program
+   adcSample = int(mySerial.readline().decode().strip()) # cast to int from readLine() which returns bytes, decode() method converst the bytes to a string, while strip() method removes whitespaces like carriage returns ((/r) and new lines (/n)
    voltSample = float(adcSample * voltageReference / 4095) # conversion from ADC 12-bit values (0-4095) to voltage values (Vref of MCU is 3.3 V)
   
    if (voltSample <= voltageReference):  # Used to ensure erroneous readings above vref are not added to the list
@@ -72,7 +78,9 @@ while 1 == 1:
    axes.xaxis.set_major_locator(MultipleLocator(timePerDivSlider.val)) # major tick mark every timePerDiv ms, MultipleLocator(timePerDivSlider.val) defines an object using a constructor, and that object is passed to this axes method
    axes.tick_params('x', labelbottom = False) # hide numbers from x-axis tick marks (many options for second argument of this method)
    
+   axes.set_ylim(0, voltageReference) # this line is needed to show values of y-axis tick marks
    axes.set_ylabel("Voltage (V)")
-   axes.yaxis.set_major_locator(MultipleLocator(voltsPerDivSlider.val))
+   axes.yaxis.set_major_locator(MultipleLocator(voltsPerDivSlider.val)) 
+   
    
    plt.pause(0.0001) # entire window pauses for a short interval before redrawing, not just the graph 
