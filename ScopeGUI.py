@@ -6,7 +6,7 @@ import numpy as np # for calculations like ranges with steps
 
 
 
-
+# TODO: Add vertical position, horizontal position slider
 # TODO: add variable to pull HAL_DELAY value and thus sample rate from stm32 firmware instead of manually changing it every time
 # TODO: Add option to select between sine, square, triangle, sawtooth waves (need to interface with STM32)
 # TODO: Add option to pause 
@@ -26,7 +26,7 @@ sampleRate = 20 # (rate = 10 times per second, based on HAL_DELAY in STM32 loop,
 totalTime = voltSampleSize / sampleRate * 1000 # initial total time (time) in ms for x-axis is equal to the range of the voltSamples / ADC sampling rate
 timePerDiv = 500 # oscilloscopes usually have 10 horizontal divs
 figure, axes = plt.subplots() # plt.subplots returns a tuple containing the figure and axes, assigned to figure and axes variables using commas
-figure.canvas.manager.set_window_title("STM32 Oscilloscope GUI")
+
 figure.subplots_adjust(bottom = 0.25) # adds a 0.25 (25 % of figure) margin below the axes plot so that time / div slider appears below the plot not inside it
 
 axes.set_title("STM32 Oscilloscope GUI", fontdict = dict (fontsize = 20, fontweight = "bold")) 
@@ -34,7 +34,7 @@ axes.set_title("STM32 Oscilloscope GUI", fontdict = dict (fontsize = 20, fontwei
 # FIXME: if time/div left at initial timePerDiv ms, waveform stops updating when it reaches the end unless you scroll through the slider (problem fixed when you go back to initial timePerDiv setting after that)
 timePerDivSlider = Slider(ax = plt.axes([0.35, 0.10,  0.4, 0.05]), label = "Time/div slider (ms)", valmin = 1, valmax = 3000, valinit = timePerDiv, orientation = "horizontal") # plt.axes() is a function that returns an axes object FIXME: GUI crashes when clicking at a point in the slider rather than scrolling to it # interactive time/div Slider object, plt.axes() is a function from the plt (pyplot) module that returns an axes object
 
-voltsPerDivSlider = Slider(ax = plt.axes([0.05, 0.3, 0.03, 0.5]), label = "Volts/div slider (V)", valmin = 0.125, valmax = 1.1, valinit = 0.25, orientation = "vertical")
+voltsPerDivSlider = Slider(ax = plt.axes([0.05, 0.3, 0.03, 0.5]), label = "Volts/div slider (V)", valmin = 0.25, valmax = 1, valinit = 0.5, orientation = "vertical")
 
 def adjustTimePerDiv (val): # need to pass an argument for voltSampleSize to actually be changed by .on_changed method in next line
    totalTime = timePerDivSlider.val * 10 # oscilloscopes usually have 10 horizontal divs
@@ -78,7 +78,7 @@ while 1 == 1:
    axes.xaxis.set_major_locator(MultipleLocator(timePerDivSlider.val)) # major tick mark every timePerDiv ms, MultipleLocator(timePerDivSlider.val) defines an object using a constructor, and that object is passed to this axes method
    axes.tick_params('x', labelbottom = False) # hide numbers from x-axis tick marks (many options for second argument of this method)
    
-   axes.set_ylim(0, voltageReference) # this line is needed to show values of y-axis tick marks
+   axes.set_ylim(-(voltageReference / voltsPerDivSlider.val), voltageReference / voltsPerDivSlider.val) # this line is needed to show values of y-axis tick marks
    axes.set_ylabel("Voltage (V)")
    axes.yaxis.set_major_locator(MultipleLocator(voltsPerDivSlider.val)) 
    
