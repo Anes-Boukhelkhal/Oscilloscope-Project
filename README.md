@@ -1,4 +1,4 @@
-# Building a STM32-Based Oscilloscope GUI using Matplotlib
+# Building an STM32-Based Oscilloscope GUI
 
 ## How it works:
 - Signals from the STM32's onboard DAC peripheral are sampled by the ADC peripheral at a rate of 20 samples per second
