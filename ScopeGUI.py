@@ -28,8 +28,8 @@ timePerDiv = 500 # oscilloscopes usually have 10 horizontal divs
 figure, axes = plt.subplots() # plt.subplots returns a tuple containing the figure and axes, assigned to figure and axes variables using commas
 
 figure.subplots_adjust(bottom = 0.25) # adds a 0.25 (25 % of figure) margin below the axes plot so that time / div slider appears below the plot not inside it
+figure.canvas.manager.set_window_title("STM32 Oscilloscope GUI")
 
-axes.set_title("STM32 Oscilloscope GUI", fontdict = dict (fontsize = 20, fontweight = "bold")) 
 
 # FIXME: if time/div left at initial timePerDiv ms, waveform stops updating when it reaches the end unless you scroll through the slider (problem fixed when you go back to initial timePerDiv setting after that)
 timePerDivSlider = Slider(ax = plt.axes([0.35, 0.10,  0.4, 0.05]), label = "Time/div slider (ms)", valmin = 1, valmax = 3000, valinit = timePerDiv, orientation = "horizontal") # plt.axes() is a function that returns an axes object FIXME: GUI crashes when clicking at a point in the slider rather than scrolling to it # interactive time/div Slider object, plt.axes() is a function from the plt (pyplot) module that returns an axes object
@@ -57,8 +57,12 @@ while 1 == 1:
    print("time / div (ms): " + str(timePerDivSlider.val) + " | volt Sample Size: " + str(voltSampleSize))
    
    #################
+   
+   try:
+      adcSample = int(mySerial.readline().decode().strip()) #  cast to int from readLine() which returns bytes, decode() method converst the bytes to a string, while strip() method removes whitespaces like carriage returns ((/r) and new lines (/n)
+   except ValueError:
+      continue
 
-   adcSample = int(mySerial.readline().decode().strip()) # cast to int from readLine() which returns bytes, decode() method converst the bytes to a string, while strip() method removes whitespaces like carriage returns ((/r) and new lines (/n)
    voltSample = float(adcSample * voltageReference / 4095) # conversion from ADC 12-bit values (0-4095) to voltage values (Vref of MCU is 3.3 V)
   
    if (voltSample <= voltageReference):  # Used to ensure erroneous readings above vref are not added to the list
