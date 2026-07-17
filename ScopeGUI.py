@@ -25,13 +25,14 @@ voltSampleSize = 500 # increased sample size so entire waveform is graphed at hi
 sampleRate = 20 # (rate = 10 times per second, based on HAL_DELAY in STM32 loop, which is set to 10 ms (1000 ms / 50 ms = 20)) 
 totalTime = voltSampleSize / sampleRate * 1000 # initial total time (time) in ms for x-axis is equal to the range of the voltSamples / ADC sampling rate
 timePerDiv = 500 # oscilloscopes usually have 10 horizontal divs
-figure, axes = plt.subplots() # plt.subplots returns a tuple containing the figure and axes, assigned to figure and axes variables using commas
+figure, axes = plt.subplots(figsize = (16, 8)) # plt.subplots returns a tuple containing the figure and axes, assigned to figure and axes variables using commas
 
-figure.subplots_adjust(bottom = 0.25) # adds a 0.25 (25 % of figure) margin below the axes plot so that time / div slider appears below the plot not inside it
+figure.subplots_adjust(bottom = 0.2, left = 0.175) # adds a 0.25 (25 % of figure) margin below the axes plot so that time / div slider appears below the plot not inside it
+figure.subplots
 figure.canvas.manager.set_window_title("STM32 Oscilloscope GUI")
 
 
-# FIXME: if time/div left at initial timePerDiv ms, waveform stops updating when it reaches the end unless you scroll through the slider (problem fixed when you go back to initial timePerDiv setting after that)
+# FIXME: Sometimes, If time/div left at initial timePerDiv ms, waveform stops updating when it reaches the end unless you scroll through the slider (problem fixed when you go back to initial timePerDiv setting after that)
 timePerDivSlider = Slider(ax = plt.axes([0.35, 0.10,  0.4, 0.05]), label = "Time/div slider (ms)", valmin = 1, valmax = 3000, valinit = timePerDiv, orientation = "horizontal") # plt.axes() is a function that returns an axes object FIXME: GUI crashes when clicking at a point in the slider rather than scrolling to it # interactive time/div Slider object, plt.axes() is a function from the plt (pyplot) module that returns an axes object
 
 voltsPerDivSlider = Slider(ax = plt.axes([0.05, 0.3, 0.03, 0.5]), label = "Volts/div slider (V)", valmin = 0.25, valmax = 1, valinit = 0.5, orientation = "vertical")
@@ -54,21 +55,21 @@ while 1 == 1:
    # (for UART) line = mySerial.readline().decode().strip() # Decode bytes from the serial stream and return them into a line as a clean string (needs to be inside while loop to display changing ADC values)
    # print(line)
    # timePerDiv = timePerDivSlider.val
-   print("time / div (ms): " + str(timePerDivSlider.val) + " | volt Sample Size: " + str(voltSampleSize))
+   # print("time / div (ms): " + str(timePerDivSlider.val) + " | volt Sample Size: " + str(voltSampleSize))
    
    #################
    
    try:
       adcSample = int(mySerial.readline().decode().strip()) #  cast to int from readLine() which returns bytes, decode() method converst the bytes to a string, while strip() method removes whitespaces like carriage returns ((/r) and new lines (/n)
    except ValueError:
-      continue
+      continue # continue to next while loop iteration if adc bytes decoding does not work above and ValueError exception is thrown (used so program doesn't crash)
 
    voltSample = float(adcSample * voltageReference / 4095) # conversion from ADC 12-bit values (0-4095) to voltage values (Vref of MCU is 3.3 V)
   
    if (voltSample <= voltageReference):  # Used to ensure erroneous readings above vref are not added to the list
       voltSamples.append(voltSample)
    
-   if len(voltSamples) > voltSampleSize: # FIXME: when time/div is smaller, waveform does not update automatically because voltSampleSize is much higher than what can be displayed on screen || Need to use > sign when adjusting time/div because if going from larger to smaller time/div the voltsSampleSize decreases even though the list length may be a lot larger at that instant, so the length needs to shrink immediately
+   if len(voltSamples) > voltSampleSize + 10: # Need to use > sign when adjusting time/div because if going from larger to smaller time/div the voltsSampleSize decreases even though the list length may be a lot larger at that instant, so the length needs to shrink immediately. Needed to add 10 because sometimes waveform is redrawn before it reaches end of graph
       voltSamples.pop(0) # remove first sample after reaching voltSampleSize 
       
    axes.clear() # need to clear before plotting data and axes (if you clear after, graph gets erased and you see nothing)   

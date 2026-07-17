@@ -54,9 +54,9 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 // TODO: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuously sampling, do this to conserve CPU resources
-
+uint16_t dacValue = 0;
 uint8_t tableIndex = 0; // make sure to initialize here, NOT in the timer interrupt service routine function, or else it gets redefined in there every time
-
+uint16_t adcValue = 0;
 // char angleString[32]; // for debugging
 char adcString[32];
 
@@ -105,6 +105,7 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -129,6 +130,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_DAC_Init();
   MX_TIM2_Init();
+
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2); // needs to be after MX_TIM2_INit(), NOT at USER CODE BEGIN 1, and need to use _IT version of function to start the timer in interrupt mode
 
@@ -418,7 +420,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
    */
 
  if (htim->Instance == TIM2) { // use if statement, otherwise there would be no point in using timer interrupts
-	  uint16_t dacValue = sineWaveLookupTable[tableIndex];
+	  HAL_DAC_Start(&hdac, DAC_CHANNEL_1); // These two functions also need to be after the DAC and DAC peripherals are initialized!
+	  HAL_ADC_Start(&hadc1); // (ADC1 is one of the ADC peripherals on the Nucleo F446re, it is not a channel of one ADC peripheral)
+
+	  dacValue = sineWaveLookupTable[tableIndex];
 
 	  ++tableIndex;
 
@@ -426,17 +431,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		  tableIndex = 0;
 	  }
 
-	  HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
 	  HAL_DAC_SetValue (&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dacValue);
-
-	  HAL_ADC_Start(&hadc1);
 	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-	  uint16_t adcValue = HAL_ADC_GetValue(&hadc1);
+
+	  adcValue = HAL_ADC_GetValue(&hadc1);
 
 	  sprintf(adcString, "%u\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>), need only the numbers or else there are parsing errors in Python code when casting to int
-	 //  sprintf(angleString, "%d\r\n", angle); // for debugging
 
-	  HAL_UART_Transmit(&huart2, (uint8_t*) adcString, strlen(adcString), HAL_MAX_DELAY);
+	  HAL_UART_Transmit(&huart2, (uint8_t*) adcString, strlen(adcString), 1);
  }
 
 }
