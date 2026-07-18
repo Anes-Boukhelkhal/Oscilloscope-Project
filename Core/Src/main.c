@@ -21,9 +21,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 #include <math.h> // may be used for waveform generation
 #include <stdio.h> // be used for sprintf() function to store string in a butter
 #include <string.h> // used for strlen() function in UART transmission
+#include <stdbool.h> // unlike in C++, you need to include this library to use bool variables
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,7 +60,7 @@ UART_HandleTypeDef huart2;
 uint16_t dacValue = 0;
 uint8_t tableIndex = 0; // make sure to initialize here, NOT in the timer interrupt service routine function, or else it gets redefined in there every time
 uint16_t adcValue = 0;
-// char angleString[32]; // for debugging
+volatile bool sampled = false; // volatile indicating variable could change between timer ISR and main()
 char adcString[32];
 
 // sine wave table values  generated from web site below:
@@ -133,8 +136,7 @@ int main(void)
 
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2); // needs to be after MX_TIM2_INit(), NOT at USER CODE BEGIN 1, and need to use _IT version of function to start the timer in interrupt mode
-
-
+  HAL_DAC_Start(&hdac, DAC_CHANNEL_1); // Need to be after the DAC and DAC peripherals are initialized!
 
 
   /* USER CODE END 2 */
@@ -154,9 +156,11 @@ int main(void)
   while (1 == 1)
   {
 
-
-
-
+	  if (sampled) { // Only if flag is set in timer ISR (ISR itself is short and concise, no intensive functions or software delays there)
+		  sprintf(adcString, "%u\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>), need only the numbers or else there are parsing errors in Python code when casting to int
+		  HAL_UART_Transmit(&huart2, (uint8_t*) adcString, strlen(adcString), 1);
+		  sampled = false;
+	  }
 
 
     /* USER CODE END WHILE */
@@ -419,9 +423,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
             the HAL_TIM_PeriodElapsedCallback could be implemented in the user file
    */
 
+
  if (htim->Instance == TIM2) { // use if statement, otherwise there would be no point in using timer interrupts
-	  HAL_DAC_Start(&hdac, DAC_CHANNEL_1); // These two functions also need to be after the DAC and DAC peripherals are initialized!
-	  HAL_ADC_Start(&hadc1); // (ADC1 is one of the ADC peripherals on the Nucleo F446re, it is not a channel of one ADC peripheral)
+	  sampled = true; // a flag for ADC 12-bit conversion to string function and UART transmission to be exceuted in the while loop. Flag is needed so that those functions only work when this happens, avoiding software delays within this timer ISR
 
 	  dacValue = sineWaveLookupTable[tableIndex];
 
@@ -432,13 +436,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  }
 
 	  HAL_DAC_SetValue (&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dacValue);
-	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+
+	  HAL_ADC_Start(&hadc1); // (ADC1 is one of the ADC peripherals on the Nucleo F446re, it is not a channel of one ADC peripheral), unlike DAC peripheral, ADC1 needs to continuously start inside this timer ISR for non-constant ADC values to be received, not sure why
+	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY); // needed so ADC values don't overlap
 
 	  adcValue = HAL_ADC_GetValue(&hadc1);
-
-	  sprintf(adcString, "%u\r\n", adcValue); // stores this formatted text in adcString (need <stdio.h> and <string.h>), need only the numbers or else there are parsing errors in Python code when casting to int
-
-	  HAL_UART_Transmit(&huart2, (uint8_t*) adcString, strlen(adcString), 1);
  }
 
 }
