@@ -36,7 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ADC_BUFFER_SIZE 40 // 20 ADC samples per second, and each one is a 12-bit value, round up to 16-bit (2 bytes), So 20 * 2 bytes is the size of the buffer
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,12 +48,15 @@
 /* Private variables ---------------------------------------------------------*/
 
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 DAC_HandleTypeDef hdac;
 
 TIM_HandleTypeDef htim2;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart1_tx;
 
 /* USER CODE BEGIN PV */
 // TODO: Use Circular DMA (direct memory access) to store ADC samples into buffers rather than continuously sampling, do this to conserve CPU resources
@@ -62,6 +65,10 @@ uint8_t tableIndex = 0; // make sure to initialize here, NOT in the timer interr
 uint16_t adcValue = 0;
 volatile bool sampled = false; // volatile indicating variable could change between timer ISR and main()
 char adcString[32];
+
+uint16_t adcBuffer[ADC_BUFFER_SIZE];
+uint8_t halfBufferCount = 0;
+uint8_t fullBufferCount = 0;
 
 // sine wave table values  generated from web site below:
 // https://deepbluembedded.com/sine-lookup-table-generator-calculator/
@@ -86,9 +93,11 @@ const uint16_t sineWaveLookupTable[] = {
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_DAC_Init(void);
+static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -129,15 +138,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_USART2_UART_Init();
   MX_DAC_Init();
+  MX_USART1_UART_Init();
   MX_TIM2_Init();
-
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2); // needs to be after MX_TIM2_INit(), NOT at USER CODE BEGIN 1, and need to use _IT version of function to start the timer in interrupt mode
   HAL_DAC_Start(&hdac, DAC_CHANNEL_1); // Need to be after the DAC and DAC peripherals are initialized!
-
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adcBuffer, ADC_BUFFER_SIZE); // 32-bit casted address of DMA buffer (which was originally declared as 16-bit) is needed, not the values (12-bit values like 2048 are not needed)
 
   /* USER CODE END 2 */
 
@@ -355,6 +365,39 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
   * @brief USART2 Initialization Function
   * @param None
   * @retval None
@@ -384,6 +427,25 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA2_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
 
 }
 
@@ -443,6 +505,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  adcValue = HAL_ADC_GetValue(&hadc1);
  }
 
+}
+
+void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc) { // the general ADC peripheral handle is needed, not a specific one
+	++halfBufferCount;
+}
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) { // the general ADC peripheral handle is needed, not a specific one
+	++fullBufferCount;
 }
 /* USER CODE END 4 */
 
